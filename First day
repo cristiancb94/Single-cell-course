@@ -1,0 +1,178 @@
+#Basic bash 
+#Current location (pwd)
+[barrera@login01 single_cell_course]$ pwd
+/scratch/zoology/spadella/single_cell_course
+#Changing directories
+cd /scratch/course/2023w300106/
+#See files in scratch (ls) list
+#Create directory (mkdir)
+[barrera@login01 2023w300106]$ mkdir barrera
+# Listing the creators and the permissions -ltrh
+#drwxr -> Permissions to the owner (read, write, execute) 
+#sr    -> Permissions to the other users (read, change to the directory)
+#-x    -> Permissions of the external users
+#Remove priviliges
+#Removing permissions from users that are not part of the group 
+chmod o-rx barrera/ 
+#This can be applied to groups
+chmod g-rx barrera/
+
+#Check the different modules
+module avail 
+module avail *blast*
+module load ncbiblastplus
+#Executing an example with blast
+mkdir test1
+#Create a file
+vim query.fasta
+#Checking help of a program (blast)
+blastn --help
+#All databases are already download
+#Code for the blast
+[barrera@login01 test1]$ blast -query query.fasta -db /scratch/mirror/ncbi/2023-12-22/nt
+#Loading environments (programs with high requisites)
+module load conda
+
+#Retrieving information from the environments
+conda info --envs
+
+#Calling busco
+[barrera@login01 test1]$ conda activate busco-5.5.0
+
+#Calling cellranger
+[barrera@login01 test1]$ ml cellranger
+[barrera@login01 test1]$ cellranger --help
+
+#Calling last version of minimap
+[barrera@login01 test1]$ conda activate minimap2-2.26
+
+##Fourth exercise##
+
+curl https://api.ncbi.nlm.nih.gov/datasets/v2alpha/genome/accession/GCF_000001635.27/download?include_annotation_type=GENOME_FASTA --output file.zip
+unzip file.zip
+
+#Directory of the fasta file
+[barrera@login01 GCF_932526225.1]$ pwd
+/scratch/course/2023w300106/barrera/test1/ncbi_dataset/data/GCF_932526225.1
+
+#Showing the first lines of the file
+[barrera@login01 GCF_932526225.1]$ head GCF_932526225.1_jaNemVect1.1_genomic.fna
+>NC_064034.1 Nematostella vectensis chromosome 1, jaNemVect1.1, whole genome shotgun sequence
+caccctacccctaccctaaccctaaccctacaccctaaccctaaccctcaaccctaaccctaccctaccctaaccctaac
+cctaaccctaccctaaccctaccccctaaccctaccctaccaccctaaccctaaccctaaccctaaccctaccctaaccc
+taaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaccctaaccctaaccctaaccctaa
+ccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaacc
+ctaaccctaaccctaaccctaaccctaccctaaccctaacccctaaccctaaccctaaccctaaccctaaccctaaccct
+aaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaa
+ccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaacc
+cctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaacca
+ccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaaccctaacc
+
+[barrera@login01 GCF_932526225.1]$ tail GCF_932526225.1_jaNemVect1.1_genomic.fna
+GTAAACAGCGCAACATATACTAAAGCTCTTATAAGGTGTTATGCTTAAAGTCTTTTTTAGAACGTTCTAATTTTATAACT
+AGGGTGTGCAGtagctttaattttttttataatgatgCAGTTTCATCGATATTATTATTCGCTTTCCTGTCGCCAAGTGT
+GCCAAATGAGGATGCCTATTATGTCGTTTACGACGCTTGTTCATAGGTGCAATAGTCCCACTTTTTTCTATTCTTACTAT
+ATTTTTTACTATACTATATCATTTAACTATATTCTTACTTTAAACAATATAGGTTTAAAACTATGTGAGTTGCAGTTGTC
+TGACAAATAGTGACATTTTGGTATAGTTTGAGGTAGCTTTGTGTGTGAAGTAGCTTTTTGTTGATTGTTAAGTAGTACCG
+ATAGGCTAGAATAAGGCTAATGGTAAGGTCTGATTGTGAAGTAGTACCGATAGGCTAGAATAAGGCTAATGGTTTGAAGC
+AAGCACTTGACACCATCATGAAAAGCGATGACGTTATTCGGTCAGTTCGTGTCCTCGTAAAAAGGCCACTAATAACTTGT
+GTGAGGTTTAAACGCATTTTGGCACGATATACCGAGATATTATCTGCTCTCCTAACAAAAGCAATAGGCTTTCAGACTTA
+TTAATTCTTTAAGTCTTCTGAAACGTAGGCATTTTTGGATAAAGCTAGATCTATAAAACTTACAATGTTGTTGTCGAAAA
+AGTAAATAGATCCGGAGGATCAAAATGTCTAGCTTTACTCGTCATGC
+#Loading a module and unloading the others
+[barrera@login01 GCF_932526225.1]$ ml unload cellranger
+[barrera@login01 GCF_932526225.1]$ ml unload conda
+[barrera@login01 GCF_932526225.1]$ ml unload ncbiblastplus/2.15.0
+[barrera@login01 GCF_932526225.1]$ ml samtools/
+[barrera@login01 GCF_932526225.1]$ samtools --help
+
+#Generating index from a fasta file (Fasta index) -- The objective to look faster certain regions of the sequence, useful in large datasets
+[barrera@login01 GCF_932526225.1]$ samtools faidx GCF_932526225.1_jaNemVect1.1_genomic.fna
+
+#To check the content of the file use vim command
+vim of the index: Second column The lenght of the first sequence
+                  Third column  The beginning
+                  Fourth column Organized in 80 bases
+                  Fifth column  Containing 81 characters (enter counts as a character)
+  The longest is chromosome 1 and so on decreasing in sequence length
+# Close vim :q! (force close without changes) // when typing "u" it will un-do changes until it gets the most recent version
+##Extracting specific regions of the genome:""
+[barrera@login01 GCF_932526225.1]$ samtools faidx GCF_932526225.1_jaNemVect1.1_genomic.fna NC_064036.1:1000-3000
+>NC_064036.1:1000-3000
+atgcttagttcaggatcctgtacatattttatgcacacaagaactaactagattctttggataacttgattaagtagatt
+ctaacatagagcatagcgctcgatagattgatatacctttttttccgtgtatactgttttatttttcctaatgttacttt
+ttggaatttacattcggaaaaaaaattatcgattgtaaccttttggaggttacactcgtaaaacaaattcccgaatgaaa
+ccctgaagcttttcccgaatgtaacctccagtccgatggtgactttgcttgggatagtttacgataccaatagtattaaa
+agtaattttcattacaattcccttcaggaatgccacgttagtctttcgttgcgggcacttgactactaacgcagcgaccc
+gggttcgattcccgctgatagcctatttttttttctttatttttttttaaatatcgatacttaattatactgttcttggt
+gtgtcatgacataaaaagaaggtatagggacattttgatgtactctcagcatctttgatgtgctcatgctttgttcagga
+tcctgtacatattttatgcacacaagaactaactagattccttggataacttgattaagtagattctaacatagagcata
+gcgctcgatagattgatatacctttatgtccgagtatactgttttattttcctaatgttactttttggaatttacattcg
+gaaaaaaaattatcgattgtaaccttttggaggttacactcgtaaaacaaattcccgaatgtaaccctgaagcttttccc
+gaatgtaacctccagtccgatggtgactttgcttgggatagtttacgataccaatagtattaaaagtaattttcattaca
+attcccttcaggaatgccacgttagtctttcgttgcgggcacttgactactaacgcagcgacccgggttcgattcccgct
+aatagccttttttttttttctttatttttttttttaaatatcgatacttaattatactgttcttggtgtgtcatgacata
+aatagaaggtatagggacatttttatgtactctcagcatctttgatgtgctcatgctttgttcaggatcctgtacatatt
+ttatgcacacaagaactaactagattccttggataacttgattaagtagattctaacatagagcatagcgctcgatagat
+tgatatacctttttttccgtgtatactgttttatttttcctaatgttactttttggaatttacattcggaaaaaaaatta
+tcgattgtaaccttttggaggttacactcgtaaaacaaattcccgaatgtaaccctgaagcttttcccgaatgtaacctc
+cagtccgatggtgactttgcttgggatagtttacgataccaatattattaaaagtaattttcattacaattcccttcagc
+aatgccacgttagtctttcgttgcgggcacttgactactaacgcagcgacccgggttcgattcccgctaatagcctattt
+ttttttctttattttttttttaaatatcgatacttaattatactgttcttggtgtgtcatgacataaaaagaaggtatag
+ggacatttttatgtactctcagcatctttgatgtgctcatgcttggttcaggatcctgtacatattttatgcacacaaga
+actaactagattctttggataacttgattaagtagattctaacatagagcatagcgctcgatagattgatataccttttt
+tttccgtgtatactgttttatttttcctaatgttactttttggaatttacattcggaaaaaaaattatcgattgtaacct
+tttggaggttacactcgtaaaacaaattcccgaatgaaaccctgaagcttttcccgaatgtaacctccagtccgatggtg
+actttgcttgggatagtttacgataccaatagtattaaaagtaattttaattacaattcccttcaggaatgccacgttag
+t
+## Extracting different sequences from the genome at the same time: 
+[barrera@login01 GCF_932526225.1]$ samtools faidx GCF_932526225.1_jaNemVect1.1_genomic.fna NC_064036.1:100-300 NC_064036.1:500-1000 NC_064036.1:1200-1500
+>NC_064036.1:100-300
+tgtaaccttttggaggttacactcgtgaaacaaattcccgaatgtaaccctgaagcttttcccgaatgtaacctccagtc
+cgatggtgactttgcttgggatagtttacgataccaatattattaaaagtaattttcattaaaattcccttcagcaatgc
+cacgttagtctttcgttgcgggcacttgactactaacgcag
+>NC_064036.1:500-1000
+ctagattccttggataacttgattaagtagattctaacatagagcatagcgctcgatagattgatatacctttttttccg
+agtatactgttttatttttcctaatgttactttttggaatttacattcgaaaaaaaattatcgattgtaaccttttggag
+gttacactcgtaaaacaaattcccgaatgtaaccctgaagcatttcccgaatgtaacctccagtccgatggtgactttgc
+ttgggatagtttacgataccaatagtattaaaagtaattttcattacaattcccttcagcaatgccacgttagtctttcg
+ttgcgggcacttgactactaacgcagcgagccgggttcgattcccgctgatagcctatttttttttttttattttttttt
+tttaaatatcgatactcaattatactgttcttggtgtgtcatgacataaaaagaaggtatagggacatttttatgtactc
+tcagcatctttgatgtgctca
+>NC_064036.1:1200-1500
+ttttggaggttacactcgtaaaacaaattcccgaatgaaaccctgaagcttttcccgaatgtaacctccagtccgatggt
+gactttgcttgggatagtttacgataccaatagtattaaaagtaattttcattacaattcccttcaggaatgccacgtta
+gtctttcgttgcgggcacttgactactaacgcagcgacccgggttcgattcccgctgatagcctatttttttttctttat
+ttttttttaaatatcgatacttaattatactgttcttggtgtgtcatgacataaaaagaag
+
+#Retrieving sequences from NCBI
+ml sratoolkit/3.0.10
+
+[barrera@login01 ex_5]$ fasterq-dump --help
+#ctrl + z does not stop the program
+then press "bg" to send it to the background
+#The methods have to be throughly described because they need to be replicated
+
+#Creating a new "command"
+[barrera@login01 ex_5]$ alias lh='ls -ltrh'
+
+#Loading STAR
+[barrera@login01 SRR24348395]$ module load star/2.7.11a
+#Generating index using STAR
+[barrera@login01 GCF_932526225.1]$ STAR --runMode genomeGenerate --genomeDir jaNemVect1.1_STAR --runThreadN 8 --genomeFastaFiles GCF_932526225.1_jaNemVect1.1_genomic.fna --genomeSAindexNbases 13
+[barrera@login01 GCF_932526225.1]$ tree jaNemVect1.1_STAR/
+jaNemVect1.1_STAR/
+├── chrLength.txt
+├── chrNameLength.txt
+├── chrName.txt
+├── chrStart.txt
+├── Genome
+├── genomeParameters.txt
+├── SA
+└── SAindex
+#The most important things are SA and SAindex 
+# Running mapping
+STAR --runThreadN 16 \
+--genomeDir /scratch/course/2023w300106/barrera/test1/ncbi_dataset/data/GCF_932526225.1/jaNemVect1.1_STAR \
+--readFilesIn /scratch/course/2023w300106/barrera/ex_5/SRR24348395/SRR24348395_1.fastq /scratch/course/2023w300106/barrera/ex_5/SRR24348395/SRR24348395_2.fastq
+                  
