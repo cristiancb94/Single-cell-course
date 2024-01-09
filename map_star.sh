@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=Star_1
 #SBATCH --nodes=1
-#SBATCH --mem=4000M
+#SBATCH --mem=16000M
 #SBATCH --time=10:00:00
 #SBATCH --cpus-per-task=16
 #SBATCH --partition=basic
