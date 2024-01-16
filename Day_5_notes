@@ -1,0 +1,113 @@
+The transcriptome has over-merging of the genes
+  The mapping should be 
+  Busco- search for universal single copy orthologs (They do not have paralogs)
+  Technical replicate-> same sample treated twice
+  Biological replicate -> Different samples
+
+#Principal components analysis
+PCA will scale the data in order to find the best conformation in which the data is best spread. 
+
+When find the angle, you can trace a line that at the end will explain the variance of the data.
+
+PCA will not reduce the dimensions
+  Will rank the components
+
+We need the columns to be the genes and the rows should be the libraries
+
+##Functional annotation of genes
+
+Comparison with large biological databases
+Primary -GenBank (Use blast)
+         ENA
+  Composite
+        Uniprot       
+Secondary -Pfam  (Conserved patterns) - Use hidden markov models
+          -Interpro
+
+Specialized OrthoDB
+            Kegg 
+            Interaction
+Tools (primary) - Blast / Diamond 
+Tools (secondary) - probabilities (HMMER tool)
+
+Functional annotation
+  InterproScan
+  Eggnogmapper
+
+They need the protein sequence
+###Steps Extract transcriptome###
+         Extract coding sequences
+         Extract protein sequences 
+
+## Running GFF3
+Will extract what you tell it to extract from a genome using 
+-x write a fasta file with spliced reads for each GFF
+-w write a fasta file with spliced transcripts 
+#To retrieve sequences of transcriptome
+gffread -g /scratch/course/2023w300106/barrera/test1/ncbi_dataset/data/GCF_932526225.1/GCF_932526225.1_jaNemVect1.1_genomic.fna  -w transcripts_1.fasta  /scratch/course/2023w300106/barrera/test1/ncbi_dataset/data/GCF_932526225.1/genomic.gff
+#To retrieve proteins.fasta -but it will assume an standard translation
+  #Wil produce it only if it contains the CDS information 
+
+For this reasons you have to look now the longest ORF for the protein coding mRNA, some of them may be not coding.
+We are chosing from TRANSDECODER the longest ORF  
+
+Map to pfam
+--retain_pfam_hits
+--retain_blastp_hits
+--single_best_only
+  The results of those analysis have to be done before 
+
+Assesing mapping tool
+Contiguity fragmentation N50 NG50 AuN curve - It is important but is not the only measurement
+Coherence -> Whatever resources I use for the assembly they make sense for this assembly (I have to map 90% of my reads to the assembly)
+             The reads should map in the opposite strand
+             The average lenght of the mapped reads should be coherent
+Completeness: ESTs, CDS and download to map to your genes, RNAseq, proteins + (Busco) they should be there
+Correctness 
+##Contiguity
+Depends on technology
+  1st generation limited to gerarchical assembly (700 bp/read)
+  2nd generation Pyro and illumina sequencing (short reads~300bp /reds) random sequence any part of the DNA -overlapping sequences-whole genome shotgun
+  3nd Generate long reads on average (3-4kb - 20 kb) PacBio || Nanopore (1000000)  They have high quality
+
+Hierarchical shotgun
+  BAC library ( fragmentation of the DNA)
+  Fingerprinting and doing a minimum tiling path based on the restriction map of the BAC clones
+    Then you have to do subclones and sequence fragments 
+##Second generation
+  Production of a lot of reads that may overlap
+  Scaffolding is based in the forward and reverse sequence of reads from different contigs that could collapse together
+Coherence
+There should be a match between the kmer distribution and the assembly
+2C value correspond to the diploid genome
+Flow citometry can over stimate 
+
+## Coherence
+  Reads should be mapping in both directions to ensure the quality of the genome
+#Completeness
+Assembly reads
+RNA-seq 
+EST
+Busco (The more missing the more incomplete it is), it could be view as a proportion of the missing total 
+
+
+###
+Results from running transdecoder:
+TransDecoder.LongOrfs -t /scratch/course/2023w300106/barrera/transcripts_1.fasta -S -O jaNemVec.transdecoder --complete_orfs_only  
+TransDecoder.Predict -t /scratch/course/2023w300106/barrera/transcripts_1.fasta --single_best_only -O jaNemVec.transdecoder
+
+-rw-r--r-- 1 barrera 2023w300106  5195786 Jan 16 15:47 transcripts_1.fasta.transdecoder.bed
+-rw-r--r-- 1 barrera 2023w300106 76496232 Jan 16 15:48 transcripts_1.fasta.transdecoder.cds
+drwxr-sr-x 5 barrera 2023w300106       33 Jan 16 15:47 transcripts_1.fasta.transdecoder_dir
+-rw-r--r-- 1 barrera 2023w300106 25527316 Jan 16 15:47 transcripts_1.fasta.transdecoder.gff3
+-rw-r--r-- 1 barrera 2023w300106 28707314 Jan 16 15:47 transcripts_1.fasta.transdecoder.pep
+
+#Formating the transdecoder file for running Eggnog and interpro
+#We need to remove * and .p1
+# For this we use the following code: 
+
+#GO terms 
+Molecular function
+Cellular location 
+Biological process
+sed -e 's/\.p[0-9]\+ / /' -e 's/*//' transcripts_1.fasta.transdecoder.pep > proteinTransdecoder.fasta
