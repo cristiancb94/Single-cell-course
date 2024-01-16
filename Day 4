@@ -1,0 +1,118 @@
+## R commands
+> getwd()
+[1] "/lisc/user/barrera"
+> setwd("/lisc/scratch/course/2023w300106/barrera/")
+> getwd()
+[1] "/lisc/scratch/course/2023w300106/barrera"
+
+#Getting an element with 1 dimension that contains elements inside
+
+> vector
+[1] 1 2 3 4 5 6 7 8
+> accel
+[1]  1  4  9 16 25 36 49 64
+> plot(vector,accel)
+> plot(vector, vector ^3)
+> plot(vector, vector ^4)
+
+##Selecting rows and columns
+history()
+summary[1,1]
+summary[1,1:2]
+summary[,2]
+
+  #Doing box plot for summary file
+colSums(summary[, 2:12])
+# Normalizing
+# First we get the total number of reads of each of te files
+# We will now compute the number of mapped reads if the number of reads is x (In this case 1 million)
+# We are trying to compare the data assuming that the libraries have the same number- To compare them
+
+library(edgeR)
+cpm(summary[, 2:12])
+scaledCPM <- cpm(summary[, 2:12])
+boxplot(scaledCPM[1, ])
+#Unassigned noFeatures (Sequences mapped but not present in the annotation)
+boxplot(scaledCPM[12, ])
+
+#Unambiguity-> The reads will come from the reverse complement
+#sessionInfo() needed at the end of the code for replicating the figures
+
+#Changing names in the matrix
+rownames(scaledCPM) <- unlist(summary [, 1])
+scaledCPM
+library(reshape2)
+#It has now two colums as 1(Variable) 2 (Library name) value(numbers)
+ggplot(scaledCPMmelt, aes(y= Var1, x=value)) + geom_boxplot()
+ggplot(scaledCPMmelt, aes(y= Var1, x=value)) + geom_violin()
+
+#Export with svg ()
+  
+#Plotting as x_values categories + values
+
+#####
+#Start -> gives you the start position of exons in the gene
+#We do not need all columns-> lets sellect 
+summary2 <- read_tsv("counts.tsv", comment = "#")
+counts[, c(1,6:17)]
+#More genes will produce more reads 
+##To normalize we want to calculate the number of reads if the genes were 1kb long
+## Divide :
+counts[, 3]/ counts[, 2]*1000
+
+rpk <- apply(counts[, 3:13], 2, function(x)/counts[,2]*1000)
+#take the matrix and apply a function (1) for rows (2) for columns
+rpk <- apply(counts[, 3:13], 2, function(x) x /counts[,2]*1000)
+rpk <- counts[, 3:13] / unlist(counts[,2]) *1000  ##We use this one
+
+#Note in single cell we normalize also by gene number and gene_size
+#Now we apply cpm and this is the tpm
+tpm <-cpm(rpk)
+#Row names
+> rownames(tpm) <-unlist(counts[,1])
+#Melt
+melNorm <- melt(tpm)
+
+#Plot the boxplot 
+ggplot(melNorm, aes(x= Var2, y=value, col=Var2)) + theme_bw() + geom_boxplot() + scale_color_viridis_d() + theme(axis.text.x = element_text(angle = 90)) + labs(x="", y ="Number of reads(CPM)", col ="Category")
+#Remove 0 counts
+tmpFil <-tmp[rowSums(tpm)>0,]
+melNorm <-melt(tmpFil)
+#Code for the plot
+> ggplot(melNorm, aes(x= Var2, y=value, col=Var2)) + scale_y_log10() + theme_bw() + geom_boxplot() + scale_color_viridis_d() + theme(axis.text.x = element_text(angle = 90)) + labs(x="", y ="Number of reads(CPM)", col ="Category")
+#Violin plot
+> ggplot(melNorm, aes(x= Var2, y=value, col=Var2)) + scale_y_log10() + theme_bw() + geom_violin() + scale_color_viridis_d() + theme(axis.text.x = element_text(angle = 90)) + labs(x="", y ="Number of reads(CPM)", col ="Category") 
+#Mixing plot
+ggplot(melNorm, aes(x= Var2, y=value, col=Var2)) + geom_violin() + geom_boxplot(width=0.11) + scale_y_log10() +theme_bw() + labs(y ="Read counts per gene (TPM)", x="", col ="Library") + theme(axis.text.x = element_blank())
+
+
+##Formating data
+#This as using pipe in 
+melNorm %>% 
+melNorm %>% group_by(Var2) %>% arrange(desc(value), .by_group = TRUE) %>% dplyr :: filter(row_number()<=5)
+ #Take matrix group bz library, then sorted, (keep the groups), filter the top 5 result counts per library
+
+#Ungroup by library name and now are grouped by genes, finally is sorted descending
+melNorm %>% group_by(Var2) %>% arrange(desc(value), .by_group = TRUE) %>% dplyr :: filter(row_number()<=5) %>% ungroup() %>% group_by(Var1) %>% summarise(count=n()) %>% arrange(desc(count))
+
+#Filterring the genes with more than 1tpm (good expression), group by Variant1 (this is grouping bz gene how many times a gene appears in the table), then count the number of times that is present in the table
+melNorm %>% dplyr :: filter(value>=1) %>% group_by(Var1) %>% summarise(count=n()) %>% ggplot(aes(x=count)) + geom_histogram()
+
+#Ploting as a density
+melNorm %>% dplyr :: filter(value>=1) %>% ggplot(aes(x=value, col=Var2)) + geom_density() +scale_y_log10() +scale_x_log10()
+
+melNorm %>% 
+  dplyr :: filter(value>=1) %>%                 #Filter TPM values greater than 1
+  ggplot(aes(y=value, col=Var2)) +              #Plotting and setting aesthetics
+  geom_violin(aes(x=Var2)) +                    #Choosing violing plot
+  scale_y_log10() + 
+  geom_boxplot(width=0.15, aes(x=Var2)) 
+
+
+#### Summarising read counts 
+.bam file (tab separated text file)
+.gtf (tab separated files)
+
+Read assignments
+  Compare mapping position with gene locations and assings reads to genes
+  
