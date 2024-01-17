@@ -1,0 +1,220 @@
+
+
+Single cell
+
+Day1
+
+Data matrix
+	Rows - Gene names
+	Columns - Cells
+
+Week 1 
+	Generate and asses a mapping tool for (RNA-seq)
+
+Linux
+	Stable 
+
+	Linux operating system
+		Kernel
+			Kernel modules
+	Connected to
+		Hardware
+			CPU
+			RAM
+			I/O -> From where you get the data
+			GPU -> Graphic units (Machine learning kernel)
+
+Lisc folder directory
+
+/ root directory
+ /home	Where all users and programs are
+ /archive where to store old data
+ /scratch where to work
+
+ -----------------------------------------------------------------
+
+Reference genome or transcriptome
+	DNA sequence of the organism
+	Does not represent the diversity, give 99% of genes and regulatory elements that you need to analyze
+		To compare all samples against different genomes to reduce the computational costs
+		Reference genomes are biased
+
+		Gene structure
+			coding - exons
+			not coding -introns
+
+		Genome annotation
+			Assing coding regions to the genome
+			Does not tell what the genes are for - blast (functional annotation) - Foldseq to compare topology
+
+		##Reference transcriptome
+			Extract RNA and assembly a map of expressing regions
+			You do not have the intergenic regins and the regulatory elements
+			RNA-seq has different sequencing depth, some genes may be duplicated (alternative isoformns)
+				20.000 genes -human  60.000 transcripts- humans
+
+			Mapping rate is lower because it can not determine to which place the read should be mapped.
+				(Problem associated to cellranger)
+				(Reduce duplication rate)
+
+		Where to get the genomes https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=10090
+			When downloading the transcripts you also download the UTR regions from the genome
+
+		To get a close organism ncbi taxonomy browser
+
+	Simbionts - mapping against a compound reference will avoid over-counting the reads from the "parasite", "host"
+
+	Where to retrieve transcriptomes
+
+	FASTQ FORMAT
+		@sequence01
+		gctacgtaccgtatcgtagc
+	+sequence01
+	HUAI*DWQDWQWDQWD*DQW    ##Quality of the reads 
+
+			Another option to retrieve sequences: 
+			https://www.ebi.ac.uk/ena/browser/text-search?query=tripedalia
+	Experiments
+		Link: https://www.ncbi.nlm.nih.gov/sra
+	Download data using accesion numbers
+		go to file / Accession list 
+
+
+Lisc- applications
+	#Modules all packages needed
+	sratoolkit - download from ncbi
+	module help 
+	module avail *blast*
+
+   Programs that are complicated to install are under conda environments
+
+   Minimap 
+   Mapping RNA-seq to PacBio reads
+
+   Samtools
+   Explore genomic data
+
+   Mapping reads from the .sam file 
+   From the mapped reads you get a .sam file which you also can index to retrieve the exons that you may be interest in
+
+Main formats
+	All are text files (Use text editor)
+	Fasta Has sometimes descriptors separated with "|" but better is separated with "spaces"
+	Fastq High a quality score assigned to letters. The higher the quality the better. The lowest score is for files that are "NNNN"
+	GFF/GTF (General feature columns) - Col 1 is the chromosome
+										Col 2 is the source
+										Col 3 type "gene" appears first, then "transcripts" wich have a different subsets of exons, CDS are part of the exons 
+										Can be there exons without coding sequence
+											ATG-Start CDS
+											UAG-Stop codon // The remaining sequence of this exon is UTR
+										Col 8 phasing-> only apply to CDS  For every sequence 6 sequences, 
+	SAM
+Mapper
+	Regularly you will use a short read mapper
+		RNA-seq may have introns you need GAP aligner - STAR
+	Why are we doing this- We want to do pairwise alignment of the 150 bp sequences
+						   Generating an index will make things easier assinging a characteristic region (k-mer) for map 
+
+		R1 is reverse
+		R2 is forward
+
+We can use the RNA mapping to generate such a file that infers the positions of the genes 
+ The best evidence for an exon is to have splited reads which means that theere is an intron in between thats why ou need OutSAMstrandfield (Need to review the function of this one)
+GTF files which contains Gene coordinates /exon coordinates
+
+##Day 2
+	Mapping wil find the best location for the short reads
+	Average input read lenght is pairing the (R1 and R2) that is the reason for the 301
+	Uniquely mapped reads->reads that did not match in more than one place of the genome 58.65%
+	Splices -Sequences of RNA splitted in two different regions (check)
+
+	Multi-mapping reads
+	Reads that were found in several regions of the reference. They may be related to duplications 
+	Sequencing errors can affect the assignation of the reads 
+		Up to 5 loci is considered mapped to multiple loci
+		If it goes beyond 5 loci is considered mapped to too many places
+	These multi-mapping can not be assigned to a specific origin, then they can not be used
+
+	Unmapped reads
+	-Too short
+	-Quality of the whole (300bp)
+
+	How to fix
+		-Quality trimming 
+		-Remove adapters
+		-Use single end (individual reads)
+
+	If you have more than 10 million uniquely mapped you can continue (human_genomics -	25k genes
+		Having 10 million reads will allow to achieve enough coverage of the genes in order to perform statistical analysis of counts
+
+Why we align
+	Pair-wise alignment (finding the best possible alignment)
+	Short sequence to long sequence (Local alignment)
+	Alignment that accounts for introns //  (Gap alignment)-> Open up the query
+
+		Mapping RNA-seq to the transcriptome (processed mRNA does not have introns) do not need the GAP alignment
+
+	Normal Single-Cell target the end of the exon(?), this may be problematic for long genes
+To rank and cluster sequences depending on the similarity
+	Comparing two individuals (looking for which regions are more smilar within the librares)
+
+Alignment
+	Index
+	QC reads - Remove adapters / low quality reads 
+	Alignment
+		Short reads < 400bp bowtie
+		Long reads > 500 minimizer minimap2, fast*
+		Spliced reads -> If the reads need to be spliced they come from RNA-seq
+			They produce a SAM file
+	
+
+	QC alignment
+		Multimappers are usually discarded
+		Aligners when they find a position, they also assing a probability of being wrong. (Comparing the ratio of the best to the second best, the larger the difference the better is the alingment)
+		Retain alignments that are informative
+
+Tools to aling 
+	Ungapped -microRNA / whole genome shot-gun.
+	Short 
+		Bowtie1- short reads
+		Bowtie2- for reads below 500 bp
+	Gapped Expressed sequences / However if mapping to a transcriptome then you do not need this / useful when mapping RNA-seq to the reference genome
+	Short
+		Star
+		HiSat2
+
+
+	Pacbio reads to a genome (aligning long reads-even chromosomes)
+	Minimap2
+ 	
+ 	Counting the number of Isoforms for every gene model that were created from mapping the RNA-seq reads
+ 	Trinity- construct a graph based on k-mer plot
+
+ 	For instance ATTG -> TTCA  Deciding which path to take while describing the longest path that also meets the rules of the presence of 
+ 					     TTGC   								ORF and an stop codon.
+
+ 						 
+ Trimming 
+ 	R1 and R2 pass QC R1 and QC R2 (Paired)
+ 	If R1 or R2 are killed you need to located in QC S1 or QC S2 (unpaired)
+
+ Probability error = 0.1
+ 	Then is transformed -10*log(base10)(probability error) = 10 and so on 
+
+
+ #######Second week######
+ Isoforms have different depth when mapped to the transcriptome
+
+ In the transcriptome -> we do not have intergenic information (will generate more models)
+ 	Each isoforme will be its own reference
+ 	Multiple reads become multiappers then the quality of mapping of those go to 0
+
+ Download the reference transcriptome of Nematostella vectensis
+ 	Index.
+ 		Aling reads
+ Align the reads to the reference trancriptome
+ Assing reads to genes
+ Compare mapping efficiency between transcriptome and genome
+
+ We do not have a GTF then we have to generate its own gtf
+ 
